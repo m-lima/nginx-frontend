@@ -8,6 +8,7 @@ COPY lua /etc/nginx/lua
 COPY hostname.env /tmp/hostname.env
 
 RUN . /tmp/hostname.env && \
+    sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" /etc/nginx/conf.d/*.conf && \
     sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" /etc/nginx/conf.d/*.conf && \
     mkdir /var/log/nginx && \
     . /var/oauth/oath.env && \
