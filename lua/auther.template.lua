@@ -13,6 +13,10 @@ local function auth(pass)
     client_secret = "$CLIENT_SECRET",
 
     scope = "openid email profile",
+
+    authorization_params = {
+      login_hint = ngx.var.cookie_Email,
+    },
   }
 
   local res, err = require("resty.openidc").authenticate(opts, nil, pass)
