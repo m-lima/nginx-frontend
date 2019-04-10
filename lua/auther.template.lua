@@ -17,13 +17,25 @@ local function auth(pass)
     authorization_params = {
       login_hint = ngx.var.cookie_Email,
     },
+
+    -- Lifecycle is still not supported on stable
+    -- lifecycle = {
+    --   on_authenticated = function(session)
+    --     ngx.log(ngx.ERROR, "login: " .. session.user.email)
+    --     ngx.header["Set-Cookie"] = "email=" .. session.user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax"
+    --   end,
+
+    --   on_logout = function(session)
+    --     ngx.log(ngx.ERROR, "logout: " .. session.user.email)
+    --     ngx.header["Set-Cookie"] = "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax"
+    --   end,
+    -- },
   }
 
   local res, err = require("resty.openidc").authenticate(opts, nil, pass)
 
   if err then
     ngx.status = 500
-    ngx.say(err)
     ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
   end
 
