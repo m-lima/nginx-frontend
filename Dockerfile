@@ -1,4 +1,4 @@
-FROM openresty/openresty:xenial
+FROM openresty/openresty
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
