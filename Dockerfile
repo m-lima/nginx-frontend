@@ -1,4 +1,4 @@
-FROM openresty/openresty:bionic
+FROM openresty/openresty:alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
