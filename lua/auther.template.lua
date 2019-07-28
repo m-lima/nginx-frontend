@@ -13,20 +13,12 @@ local function auth(pass)
     client_secret = "$CLIENT_SECRET",
 
     scope = "openid email profile",
-
     authorization_params = {
       login_hint = ngx.var.cookie_Email,
     },
 
-    Lifecycle is still not supported on stable
     lifecycle = {
-      on_authenticated = function(session)
-        ngx.log(ngx.ERROR, "login: " .. session.user.email)
-        ngx.header["Set-Cookie"] = "email=" .. session.user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax"
-      end,
-
       on_logout = function(session)
-        ngx.log(ngx.ERROR, "logout: " .. session.user.email)
         ngx.header["Set-Cookie"] = "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax"
       end,
     },
@@ -48,6 +40,7 @@ local function auth(pass)
   ngx.req.set_header("X-GIVEN-NAME", res.user.given_name)
   ngx.req.set_header("X-FAMILY-NAME", res.user.family_name)
   ngx.req.set_header("X-PICTURE", res.user.picture)
+  ngx.header["Set-Cookie"] = "email=" .. res.user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax"
 
   local redirect = ngx.re.sub(ngx.var.request_uri, "^/(.*)", "/internal/$1", "o")
   ngx.exec(redirect)
