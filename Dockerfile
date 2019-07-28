@@ -1,4 +1,4 @@
-FROM openresty/openresty
+FROM openresty/openresty:bionic
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
