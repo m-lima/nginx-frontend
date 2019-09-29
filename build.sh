@@ -1,4 +1,5 @@
 docker build -t nginx .
+docker stop nginx
 docker rm nginx
 docker create \
   --publish 80:80 \
