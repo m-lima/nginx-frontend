@@ -8,9 +8,6 @@ docker create \
   --volume browsify:/var/www/browsify \
   --volume skull:/var/www/skull \
   --volume sudoku:/var/www/sudoku \
-  --link browsify \
-  --link sync \
-  --link soccer-pong \
-  --link skull \
+  --net fly \
   --name nginx \
   nginx
