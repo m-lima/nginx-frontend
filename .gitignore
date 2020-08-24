@@ -8,3 +8,6 @@ oauth
 # Configuration
 conf/conf.d/include
 hostname.env
+
+# Backup ignored files
+backup
