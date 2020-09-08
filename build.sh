@@ -8,6 +8,7 @@ docker create \
   --volume browsify:/var/www/browsify \
   --volume skull:/var/www/skull \
   --volume sudoku:/var/www/sudoku \
+  --volume passer:/var/www/passer \
   --net fly \
   --name nginx \
   nginx
