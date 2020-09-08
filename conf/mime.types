@@ -74,6 +74,8 @@ types {
     application/octet-stream                         iso img;
     application/octet-stream                         msi msp msm;
 
+    application/wasm                                 wasm;
+
     audio/midi                                       mid midi kar;
     audio/mpeg                                       mp3;
     audio/ogg                                        ogg;
