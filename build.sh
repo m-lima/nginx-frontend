@@ -1,6 +1,7 @@
 docker build -t nginx .
 docker stop nginx
 docker rm nginx
+docker network create fly
 docker create \
   --publish 80:80 \
   --publish 443:443 \
