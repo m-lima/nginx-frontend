@@ -21,6 +21,9 @@ local function auth(pass)
       on_logout = function(session)
         ngx.header["Set-Cookie"] = "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax"
       end,
+      on_authenticated = function(session)
+        session.data.access_token_expiration = ngx.time() + 3600 * 24 * 7
+      end,
     },
   }
 
