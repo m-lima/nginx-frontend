@@ -131,7 +131,7 @@ local function auth(pass)
   ngx.req.set_header("X-FAMILY-NAME", user.family_name)
   ngx.req.set_header("X-PICTURE", user.picture)
 
-  local cookie = {}
+  local cookie
   if not ngx.var.cookie_Email then
     cookie = { "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
   end
@@ -139,11 +139,17 @@ local function auth(pass)
   if not user_token then
     local user_cookie = encrypt_user(user)
     if user then
-      cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+      if cookie then
+        cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+      else
+        cookie = { "user=" .. user_cookie .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+      end
     end
   end
 
-  ngx.header["Set-Cookie"] = cookie
+  if cookie then
+    ngx.header["Set-Cookie"] = cookie
+  end
 
   local redirect = ngx.re.sub(ngx.var.request_uri, "^/(.*)", "/internal/$1", "o")
   ngx.exec(redirect)
