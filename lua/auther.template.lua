@@ -132,13 +132,22 @@ local function auth(pass)
   ngx.req.set_header("X-PICTURE", user.picture)
 
   local cookie
+
+  if ngx.var.cookie_Session then
+    cookie = { "session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
+  end
+
   if not ngx.var.cookie_Email then
-    cookie = { "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+    if cookie then
+      cookie = { unpack(cookie), "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+    else
+      cookie = { "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+    end
   end
 
   if not user_token then
     local user_cookie = encrypt_user(user)
-    if user then
+    if user_cookie then
       if cookie then
         cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
       else
