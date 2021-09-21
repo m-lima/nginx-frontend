@@ -2,33 +2,74 @@ local auther = {
   _VERSION = "0.0.1"
 }
 
-math.randomseed(os.time())
+ffi = require('ffi')
+
+ffi.cdef[[
+typedef struct CrypterRustSlice {
+  uint8_t *ptr;
+  uintptr_t len;
+  uintptr_t capacity;
+} CrypterRustSlice;
+
+typedef struct CrypterCSlice {
+  const uint8_t *ptr;
+  uintptr_t len;
+} CrypterCSlice;
+
+void crypter_free_slice(struct CrypterRustSlice slice);
+struct CrypterRustSlice crypter_encrypt(struct CrypterCSlice pass, struct CrypterCSlice payload);
+struct CrypterRustSlice crypter_decrypt(struct CrypterCSlice pass, struct CrypterCSlice payload);
+]]
+
+crypter = ffi.load("crypter")
+
+local function string_as_slice(text)
+  local slice = ffi.new("CrypterCSlice")
+
+  slice.ptr = ffi.cast("uint8_t *", text)
+  slice.len = string.len(text)
+  return slice
+end
+
+local function slice_into_string(slice)
+  local string = ffi.string(slice.ptr, slice.len)
+  crypter.crypter_free_slice(slice)
+  return string
+end
+
+local function string_as_user(string)
+  local fields = {}
+  local index = 1
+  for i=1,#string do
+    if string.byte(string, i) == 0 then
+      table.insert(fields, string.sub(string, index, i - 1))
+      i = i + 1
+      index = i
+    end
+  end
+  table.insert(fields, string.sub(string, index))
+
+  return {
+    email = fields[1],
+    given_name = fields[2],
+    family_name = fields[3],
+    picture = fields[4],
+  }
+end
+
+secret = string_as_slice("$COOKIE_SECRET")
 
 local function encrypt_user(user)
-  local nonce = ""
-  for i=1,12 do
-    nonce = nonce .. string.char(math.floor(math.random() * 256))
-  end
+  local payload_data = string.format("%s\0%s\0%s\0%s", user.email, user.given_name, user.family_name, user.picture)
+  local payload = string_as_slice(payload_data)
 
-  local aes, err = require("resty.nettle.aes").new("$COOKIE_SECRET", "gcm", nonce)
-  if err then
-    ngx.log(ngx.ERR, err)
+  local encrypted = crypter.crypter_encrypt(secret, payload)
+
+  if encrypted.ptr == nil then
     return nil
   end
 
-  local payload = string.format("%s\0%s\0%s\0%s", user.email, user.given_name, user.family_name, user.picture)
-
-  local encrypted, digest = aes:encrypt(payload)
-  if not encrypted then
-    ngx.log(ngx.ERR, "Could not encrypt")
-  end
-
-  if encrypted then
-    return ngx.encode_base64(encrypted .. digest .. nonce)
-  else
-    return nil
-  end
-
+  return ngx.encode_base64(slice_into_string(encrypted))
 end
 
 local function decrypt_user()
@@ -39,44 +80,17 @@ local function decrypt_user()
 
   local decoded, err = ngx.decode_base64(encoded)
   if err then
-    return nil
-  end
-
-  local nonce = string.sub(decoded, -12)
-
-  local aes, err = require("resty.nettle.aes").new("$COOKIE_SECRET", "gcm", nonce)
-  if err then
     ngx.log(ngx.ERR, err)
     return nil
   end
 
-  local expected_digest = string.sub(decoded, -28, -13)
-  local decrypted, digest = aes:decrypt(string.sub(decoded, 0, -29))
-  if not decrypted then
+  local decrypted = crypter.crypter_decrypt(secret, string_as_slice(decoded))
+
+  if decrypted.ptr == nil then
     return nil
   end
 
-  if digest ~= expected_digest then
-    return nil
-  end
-
-  local fields = {}
-  local index = 1
-  for i=1,#decrypted do
-    if string.byte(decrypted, i) == 0 then
-      table.insert(fields, string.sub(decrypted, index, i - 1))
-      i = i + 1
-      index = i
-    end
-  end
-  table.insert(fields, string.sub(decrypted, index))
-
-  return {
-    email = fields[1],
-    given_name = fields[2],
-    family_name = fields[3],
-    picture = fields[4],
-  }
+  return string_as_user(slice_into_string(decrypted))
 end
 
 local function call_oidc(pass)
