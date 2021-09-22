@@ -12,7 +12,7 @@ typedef struct CrypterRustSlice {
 } CrypterRustSlice;
 
 typedef struct CrypterCSlice {
-  const uint8_t *ptr;
+  uint8_t *ptr;
   uintptr_t len;
 } CrypterCSlice;
 
@@ -23,21 +23,24 @@ struct CrypterRustSlice crypter_decrypt(struct CrypterCSlice pass, struct Crypte
 
 crypter = ffi.load("crypter")
 
-local function string_as_slice(text)
+local function str_to_slice(text)
   local slice = ffi.new("CrypterCSlice")
 
-  slice.ptr = ffi.cast("uint8_t *", text)
-  slice.len = string.len(text)
-  return slice
+  ptr = ffi.new('uint8_t[?]', #text)
+  ffi.copy(ptr, text)
+
+  slice.ptr = ffi.cast("uint8_t *", ptr)
+  slice.len = #text
+  return slice, ptr
 end
 
-local function slice_into_string(slice)
+local function slice_to_str(slice)
   local string = ffi.string(slice.ptr, slice.len)
   crypter.crypter_free_slice(slice)
   return string
 end
 
-local function string_as_user(string)
+local function str_to_user(string)
   local fields = {}
   local index = 1
   for i=1,#string do
@@ -57,19 +60,17 @@ local function string_as_user(string)
   }
 end
 
-secret = string_as_slice("$COOKIE_SECRET")
+SECRET_SLICE, SECRET_PTR = str_to_slice("$COOKIE_SECRET")
 
 local function encrypt_user(user)
-  local payload_data = string.format("%s\0%s\0%s\0%s", user.email, user.given_name, user.family_name, user.picture)
-  local payload = string_as_slice(payload_data)
+  local payload_slice, payload_ptr = str_to_slice(string.format("%s\0%s\0%s\0%s", user.email, user.given_name, user.family_name, user.picture))
 
-  local encrypted = crypter.crypter_encrypt(secret, payload)
-
+  local encrypted = crypter.crypter_encrypt(SECRET_SLICE, payload_slice)
   if encrypted.ptr == nil then
     return nil
   end
 
-  return ngx.encode_base64(slice_into_string(encrypted))
+  return ngx.encode_base64(slice_to_str(encrypted))
 end
 
 local function decrypt_user()
@@ -78,19 +79,19 @@ local function decrypt_user()
     return nil
   end
 
-  local decoded, err = ngx.decode_base64(encoded)
-  if err then
-    ngx.log(ngx.ERR, err)
+  local decoded = ngx.decode_base64(encoded)
+  if not decoded then
     return nil
   end
 
-  local decrypted = crypter.crypter_decrypt(secret, string_as_slice(decoded))
+  local decoded_slice, decoded_ptr = str_to_slice(decoded)
+  local decrypted = crypter.crypter_decrypt(SECRET_SLICE, decoded_slice)
 
   if decrypted.ptr == nil then
     return nil
   end
 
-  return string_as_user(slice_into_string(decrypted))
+  return str_to_user(slice_to_str(decrypted))
 end
 
 local function call_oidc(pass)
