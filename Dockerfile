@@ -1,13 +1,3 @@
-FROM rust:alpine as rust
-
-WORKDIR /src
-
-RUN apk add git musl-dev \
-    && git clone https://github.com/m-lima/crypter \
-    && cd crypter \
-    && RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --lib --features ffi \
-    && strip target/release/libcrypter.so
-
 FROM openresty/openresty:alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
@@ -16,7 +6,7 @@ COPY cert /var/cert
 COPY oauth /var/oauth
 COPY lua /etc/nginx/lua
 COPY hostname.env /tmp/hostname.env
-COPY --from=rust /src/crypter/target/release/libcrypter.so /usr/local/lib/.
+COPY --from=crypter /src/crypter/target/release/libcrypter.so /usr/local/lib/.
 
 RUN . /tmp/hostname.env && \
     sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" /etc/nginx/conf.d/*.conf && \
