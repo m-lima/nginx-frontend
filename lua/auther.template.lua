@@ -63,7 +63,7 @@ local function str_to_user(string)
     return nil
   end
 
-  if os.time() - fields[1] > 86400 then
+  if os.time() - fields[1] > 172800 then
     ngx.log(ngx.ALERT, "Expired token")
     return nil
   end
@@ -181,9 +181,9 @@ local function auth(pass)
   local user_cookie = encrypt_user(user)
   if user_cookie then
     if cookie then
-      cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=86400;Secure;HttpOnly;SameSite=lax" }
+      cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax" }
     else
-      cookie = { "user=" .. user_cookie .. ";Path=/;Max-Age=86400;Secure;HttpOnly;SameSite=lax" }
+      cookie = { "user=" .. user_cookie .. ";Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax" }
     end
   end
 
