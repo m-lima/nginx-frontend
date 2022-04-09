@@ -1,6 +1,6 @@
-docker build -t nginx .
-docker stop nginx
-docker rm nginx
+docker build -t nginx-fly .
+docker stop nginx-fly
+docker rm nginx-fly
 docker network create fly
 docker create \
   --publish 80:80 \
@@ -12,5 +12,5 @@ docker create \
   --volume passer:/var/www/passer:ro \
   --volume cloud:/var/www/cloud:ro \
   --net fly \
-  --name nginx \
-  nginx
+  --name nginx-fly \
+  nginx-fly
