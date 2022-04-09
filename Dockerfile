@@ -6,7 +6,8 @@ COPY cert /var/cert
 COPY oauth /var/oauth
 COPY lua /etc/nginx/lua
 COPY hostname.env /tmp/hostname.env
-COPY --from=crypter /src/crypter/target/release/libcrypter.so /usr/local/lib/.
+# COPY --from=crypter /src/target/release/libcrypter.so /usr/local/lib/.
+COPY lib/libcrypter.so /usr/local/lib/.
 
 RUN . /tmp/hostname.env && \
     sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" /etc/nginx/conf.d/*.conf && \
