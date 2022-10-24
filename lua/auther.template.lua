@@ -2,9 +2,9 @@ local auther = {
   _VERSION = "0.0.1"
 }
 
-ffi = require('ffi')
+local ffi = require('ffi')
 
-ffi.cdef[[
+ffi.cdef([[
 typedef struct CrypterRustSlice {
   uint8_t *ptr;
   uintptr_t len;
@@ -19,19 +19,19 @@ typedef struct CrypterCSlice {
 void crypter_free_slice(struct CrypterRustSlice slice);
 struct CrypterRustSlice crypter_encrypt(struct CrypterCSlice pass, struct CrypterCSlice payload);
 struct CrypterRustSlice crypter_decrypt(struct CrypterCSlice pass, struct CrypterCSlice payload);
-]]
+]])
 
-crypter = ffi.load("crypter")
+local crypter = ffi.load("crypter")
 
 local function str_to_slice(text)
   local slice = ffi.new("CrypterCSlice")
 
-  ptr = ffi.new('uint8_t[?]', #text)
+  local ptr = ffi.new('uint8_t[?]', #text)
   ffi.copy(ptr, text)
 
   slice.ptr = ffi.cast("uint8_t *", ptr)
   slice.len = #text
-  return slice, ptr
+  return slice
 end
 
 local function slice_to_str(slice)
@@ -43,7 +43,7 @@ end
 local function str_to_user(string)
   local fields = {}
   local index = 1
-  for i=1,#string do
+  for i = 1, #string do
     if string.byte(string, i) == 0 then
       table.insert(fields, string.sub(string, index, i - 1))
       i = i + 1
@@ -76,10 +76,17 @@ local function str_to_user(string)
   }
 end
 
-SECRET_SLICE, SECRET_PTR = str_to_slice("$COOKIE_SECRET")
+local SECRET_SLICE = str_to_slice("$COOKIE_SECRET")
 
 local function encrypt_user(user)
-  local payload_slice, payload_ptr = str_to_slice(string.format("%d\0%s\0%s\0%s\0%s", os.time(), user.email, user.given_name, user.family_name, user.picture))
+  local payload_slice = str_to_slice(string.format(
+    "%d\0%s\0%s\0%s\0%s",
+    os.time(),
+    user.email,
+    user.given_name,
+    user.family_name,
+    user.picture
+  ))
 
   local encrypted = crypter.crypter_encrypt(SECRET_SLICE, payload_slice)
   if encrypted.ptr == nil then
@@ -90,8 +97,16 @@ local function encrypt_user(user)
 end
 
 local function decrypt_user()
-  local encoded = ngx.var.cookie_User or ngx.req.get_headers()["X-USER-TOKEN"]
+  local encoded = ngx.var.cookie_User
+
   if not encoded then
+    encoded = ngx.req.get_headers()["X-USER-TOKEN"]
+    if type(encoded) == 'table' then
+      encoded = encoded[1]
+    end
+  end
+
+  if not encoded or #encoded == 0 then
     return nil
   end
 
@@ -100,7 +115,7 @@ local function decrypt_user()
     return nil
   end
 
-  local decoded_slice, decoded_ptr = str_to_slice(decoded)
+  local decoded_slice = str_to_slice(decoded)
   local decrypted = crypter.crypter_decrypt(SECRET_SLICE, decoded_slice)
 
   if decrypted.ptr == nil then
@@ -126,8 +141,9 @@ local function call_oidc(pass)
     },
 
     lifecycle = {
-      on_logout = function(session)
-        ngx.header["Set-Cookie"] = { "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax", "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
+      on_logout = function()
+        ngx.header["Set-Cookie"] = { "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax",
+          "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
       end,
     },
   }
@@ -157,12 +173,13 @@ local function auth(pass)
       ngx.header["Set-Cookie"] = { "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
     end
     ngx.exit(ngx.HTTP_UNAUTHORIZED)
+    return;
   end
 
   ngx.req.set_header("X-USER", user.email)
-  ngx.req.set_header("X-GIVEN-NAME", user.given_name)
-  ngx.req.set_header("X-FAMILY-NAME", user.family_name)
-  ngx.req.set_header("X-PICTURE", user.picture)
+  if user.given_name then ngx.req.set_header("X-GIVEN-NAME", user.given_name) end
+  if user.family_name then ngx.req.set_header("X-FAMILY-NAME", user.family_name) end
+  if user.picture then ngx.req.set_header("X-PICTURE", user.picture) end
 
   local cookie
 
@@ -190,7 +207,11 @@ local function auth(pass)
   ngx.header["Set-Cookie"] = cookie
 
   local redirect = ngx.re.sub(ngx.var.request_uri, "^/(.*)", "/internal/$1", "o")
-  ngx.exec(redirect)
+  if redirect then
+    ngx.exec(redirect)
+  else
+    ngx.exit(ngx.HTTP_BAD_REQUEST)
+  end
 end
 
 function auther.login()
