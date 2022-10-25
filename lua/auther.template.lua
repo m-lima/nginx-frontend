@@ -26,11 +26,10 @@ local crypter = ffi.load("crypter")
 local function str_to_slice(text)
   local slice = ffi.new("CrypterCSlice")
 
-  local ptr = ffi.new('uint8_t[?]', #text)
-  ffi.copy(ptr, text)
-
-  slice.ptr = ffi.cast("uint8_t *", ptr)
+  slice.ptr = ffi.new('uint8_t[?]', #text)
   slice.len = #text
+  ffi.copy(slice.ptr, text)
+
   return slice
 end
 
@@ -142,8 +141,10 @@ local function call_oidc(pass)
 
     lifecycle = {
       on_logout = function()
-        ngx.header["Set-Cookie"] = { "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax",
-          "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
+        ngx.header["Set-Cookie"] = {
+          "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax",
+          "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax"
+        }
       end,
     },
   }
