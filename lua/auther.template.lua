@@ -1,5 +1,7 @@
+ngx.log(ngx.STDERR, 'Loading auther')
+
 local auther = {
-  _VERSION = "0.0.1"
+  _VERSION = '0.0.1'
 }
 
 local ffi = require('ffi')
@@ -21,16 +23,18 @@ struct CrypterRustSlice crypter_encrypt(struct CrypterCSlice pass, struct Crypte
 struct CrypterRustSlice crypter_decrypt(struct CrypterCSlice pass, struct CrypterCSlice payload);
 ]])
 
-local crypter = ffi.load("crypter")
+local crypter = ffi.load('crypter')
 
 local function str_to_slice(text)
-  local slice = ffi.new("CrypterCSlice")
+  local slice = ffi.new('CrypterCSlice')
 
-  slice.ptr = ffi.new('uint8_t[?]', #text)
+  local ptr = ffi.new('uint8_t[?]', #text)
+  ffi.copy(ptr, text)
+
+  slice.ptr = ffi.cast('uint8_t *', ptr)
   slice.len = #text
-  ffi.copy(slice.ptr, text)
 
-  return slice
+  return slice, ptr
 end
 
 local function slice_to_str(slice)
@@ -52,18 +56,18 @@ local function str_to_user(string)
   table.insert(fields, string.sub(string, index))
 
   if not fields[1] then
-    ngx.log(ngx.ALERT, "Expiry missing")
+    ngx.log(ngx.STDERR, 'Expiry missing')
     return nil
   end
 
   local expiry = tonumber(fields[1])
   if not expiry then
-    ngx.log(ngx.ALERT, "Maformed expiry")
+    ngx.log(ngx.STDERR, 'Maformed expiry')
     return nil
   end
 
   if os.time() - fields[1] > 172800 then
-    ngx.log(ngx.ALERT, "Expired token")
+    ngx.log(ngx.STDERR, 'Expired token')
     return nil
   end
 
@@ -75,11 +79,9 @@ local function str_to_user(string)
   }
 end
 
-local SECRET_SLICE = str_to_slice("$COOKIE_SECRET")
-
 local function encrypt_user(user)
   local payload_slice = str_to_slice(string.format(
-    "%d\0%s\0%s\0%s\0%s",
+    '%d\0%s\0%s\0%s\0%s',
     os.time(),
     user.email,
     user.given_name,
@@ -87,7 +89,7 @@ local function encrypt_user(user)
     user.picture
   ))
 
-  local encrypted = crypter.crypter_encrypt(SECRET_SLICE, payload_slice)
+  local encrypted = crypter.crypter_encrypt(str_to_slice('$COOKIE_SECRET'), payload_slice)
   if encrypted.ptr == nil then
     return nil
   end
@@ -99,7 +101,7 @@ local function decrypt_user()
   local encoded = ngx.var.cookie_User
 
   if not encoded then
-    encoded = ngx.req.get_headers()["X-USER-TOKEN"]
+    encoded = ngx.req.get_headers()['X-USER-TOKEN']
     if type(encoded) == 'table' then
       encoded = encoded[1]
     end
@@ -115,7 +117,7 @@ local function decrypt_user()
   end
 
   local decoded_slice = str_to_slice(decoded)
-  local decrypted = crypter.crypter_decrypt(SECRET_SLICE, decoded_slice)
+  local decrypted = crypter.crypter_decrypt(str_to_slice('$COOKIE_SECRET'), decoded_slice)
 
   if decrypted.ptr == nil then
     return nil
@@ -126,30 +128,30 @@ end
 
 local function call_oidc(pass)
   local opts = {
-    redirect_uri = "https://api.$HOST_NAME/callback",
-    redirect_after_logout_uri = ngx.var.arg_redirect or ngx.req.get_headers()["Referer"],
+    redirect_uri = 'https://api.$HOST_NAME/callback',
+    redirect_after_logout_uri = ngx.var.arg_redirect or ngx.req.get_headers()['Referer'],
 
-    discovery = "https://accounts.google.com/.well-known/openid-configuration",
+    discovery = 'https://accounts.google.com/.well-known/openid-configuration',
 
-    client_id = "$CLIENT_ID",
-    client_secret = "$CLIENT_SECRET",
+    client_id = '$CLIENT_ID',
+    client_secret = '$CLIENT_SECRET',
 
-    scope = "openid email profile",
+    scope = 'openid email profile',
     authorization_params = {
       login_hint = ngx.var.cookie_Email,
     },
 
     lifecycle = {
       on_logout = function()
-        ngx.header["Set-Cookie"] = {
-          "email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax",
-          "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax"
+        ngx.header['Set-Cookie'] = {
+          'email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax',
+          'user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax'
         }
       end,
     },
   }
 
-  local res, err = require("resty.openidc").authenticate(opts, nil, pass)
+  local res, err = require('resty.openidc').authenticate(opts, nil, pass)
 
   if err then
     ngx.status = 500
@@ -171,43 +173,43 @@ local function auth(pass)
   if not (user and user.email) then
     ngx.status = 401
     if ngx.var.cookie_User then
-      ngx.header["Set-Cookie"] = { "user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
+      ngx.header['Set-Cookie'] = { 'user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
     end
     ngx.exit(ngx.HTTP_UNAUTHORIZED)
     return;
   end
 
-  ngx.req.set_header("X-USER", user.email)
-  if user.given_name then ngx.req.set_header("X-GIVEN-NAME", user.given_name) end
-  if user.family_name then ngx.req.set_header("X-FAMILY-NAME", user.family_name) end
-  if user.picture then ngx.req.set_header("X-PICTURE", user.picture) end
+  ngx.req.set_header('X-USER', user.email)
+  if user.given_name then ngx.req.set_header('X-GIVEN-NAME', user.given_name) end
+  if user.family_name then ngx.req.set_header('X-FAMILY-NAME', user.family_name) end
+  if user.picture then ngx.req.set_header('X-PICTURE', user.picture) end
 
   local cookie
 
   if ngx.var.cookie_Session then
-    cookie = { "session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax" }
+    cookie = { 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
   end
 
   if not ngx.var.cookie_Email then
     if cookie then
-      cookie = { unpack(cookie), "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+      cookie = { unpack(cookie), 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax' }
     else
-      cookie = { "email=" .. user.email .. ";Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax" }
+      cookie = { 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax' }
     end
   end
 
   local user_cookie = encrypt_user(user)
   if user_cookie then
     if cookie then
-      cookie = { unpack(cookie), "user=" .. user_cookie .. ";Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax" }
+      cookie = { unpack(cookie), 'user=' .. user_cookie .. ';Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax' }
     else
-      cookie = { "user=" .. user_cookie .. ";Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax" }
+      cookie = { 'user=' .. user_cookie .. ';Path=/;Max-Age=172800;Secure;HttpOnly;SameSite=lax' }
     end
   end
 
-  ngx.header["Set-Cookie"] = cookie
+  ngx.header['Set-Cookie'] = cookie
 
-  local redirect = ngx.re.sub(ngx.var.request_uri, "^/(.*)", "/internal/$1", "o")
+  local redirect = ngx.re.sub(ngx.var.request_uri, '^/(.*)', '/internal/$1', 'o')
   if redirect then
     ngx.exec(redirect)
   else
@@ -220,7 +222,7 @@ function auther.login()
 end
 
 function auther.guard()
-  auth("pass")
+  auth('pass')
 end
 
 return auther
