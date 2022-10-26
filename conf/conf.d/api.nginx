@@ -41,7 +41,7 @@ server {
   add_header 'Access-Control-Allow-Origin' "$cors_origin" always;
   add_header 'Access-Control-Allow-Credentials' "$cors_credentials" always;
 
-  include /etc/nginx/conf.d/include/api/public/*.conf;
+  include /etc/nginx/conf.d/include/api/public/*.nginx;
 
   location /options {
     internal;
@@ -78,7 +78,7 @@ server {
   location /internal {
     internal;
 
-    include /etc/nginx/conf.d/include/api/internal/*.conf;
+    include /etc/nginx/conf.d/include/api/internal/*.nginx;
 
     location ~ ^/internal/login/(.+)$ {
       rewrite ^/internal/login/(.+)$ /internal/$1 last;
