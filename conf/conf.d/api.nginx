@@ -23,7 +23,7 @@ server {
   charset utf-8;
 
   access_log /var/log/nginx/api.access.log;
-  error_log /var/log/nginx/api.error.log;
+  error_log /var/log/nginx/api.error.log warn;
 
   location /favicon.ico {
     return 404;
@@ -32,6 +32,9 @@ server {
   if ($request_method = 'OPTIONS') {
     rewrite .* /options last;
   }
+
+  set $cors_origin '';
+  set $cors_credentials '';
 
   if ($http_origin ~ '^https://(localhost|.+\.$HOST_NAME_REGEX)') {
     set $cors_origin $http_origin;
@@ -46,13 +49,6 @@ server {
   location /options {
     internal;
 
-    if ($http_origin ~ '^https://(localhost|.+\.$HOST_NAME_REGEX)') {
-      set $cors_origin $http_origin;
-      set $cors_credentials 'true';
-    }
-
-    add_header 'Access-Control-Allow-Origin' "$cors_origin" always;
-    add_header 'Access-Control-Allow-Credentials' "$cors_credentials" always;
     add_header 'Access-Control-Allow-Methods' "$http_access_control_request_method" always;
     add_header 'Access-Control-Allow-Headers' "$http_access_control_request_headers" always;
 
