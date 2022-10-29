@@ -49,6 +49,16 @@ server {
   location /options {
     internal;
 
+    set $cors_origin '';
+    set $cors_credentials '';
+
+    if ($http_origin ~ '^(http://localhost|https://.+\.$HOST_NAME_REGEX)') {
+      set $cors_origin $http_origin;
+      set $cors_credentials 'true';
+    }
+
+    add_header 'Access-Control-Allow-Origin' "$cors_origin" always;
+    add_header 'Access-Control-Allow-Credentials' "$cors_credentials" always;
     add_header 'Access-Control-Allow-Methods' "$http_access_control_request_method" always;
     add_header 'Access-Control-Allow-Headers' "$http_access_control_request_headers" always;
 
@@ -61,6 +71,12 @@ server {
     access_by_lua_block {
       require("auther").login()
     }
+  }
+
+  location /logout {
+    add_header Set-Cookie 'email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
+    add_header Set-Cookie 'user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
+    add_header Set-Cookie 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
   }
 
   location / {
