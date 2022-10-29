@@ -77,6 +77,13 @@ server {
     add_header Set-Cookie 'email=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
     add_header Set-Cookie 'user=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
     add_header Set-Cookie 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax';
+
+    if ($arg_redirect ~ .+) {
+      return 302 $arg_redirect;
+    }
+
+    default_type text/html;
+    return 200 '<html><body>Logged Out</body></html>';
   }
 
   location / {
