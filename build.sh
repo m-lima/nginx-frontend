@@ -11,6 +11,7 @@ docker create \
   --volume sudoku:/var/www/sudoku:ro \
   --volume passer:/var/www/passer:ro \
   --volume cloud:/var/www/cloud:ro \
+  --volume hunger:/var/www/hunger:ro \
   --net fly \
   --name nginx-fly \
   nginx-fly
