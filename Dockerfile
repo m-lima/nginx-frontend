@@ -12,6 +12,8 @@ COPY lib/libcrypter.so /usr/local/lib/.
 RUN . /tmp/hostname.env && \
     sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" /etc/nginx/conf.d/*.nginx && \
     sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" /etc/nginx/conf.d/*.nginx && \
+    sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" /etc/nginx/conf.d/include/server/*.nginx && \
+    sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" /etc/nginx/conf.d/include/server/*.nginx && \
     mkdir /var/log/nginx && \
     . /var/oauth/oath.env && \
     envsubst '\$CLIENT_ID \$CLIENT_SECRET \$COOKIE_SECRET \$HOST_NAME' \

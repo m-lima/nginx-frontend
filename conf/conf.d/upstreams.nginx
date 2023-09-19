@@ -1,0 +1,13 @@
+resolver 127.0.0.11;
+
+upstream host_skull {
+  server skull:80;
+
+  keepalive 2;
+}
+
+upstream host_cloud {
+  server cloud:9000;
+
+  keepalive 2;
+}
