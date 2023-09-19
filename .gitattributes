@@ -1,0 +1,6 @@
+# Servers
+conf/conf.d/include/** filter=git-crypt diff=git-crypt
+conf/conf.d/ignore/**  filter=git-crypt diff=git-crypt
+
+# Configuration
+hostname.env           filter=git-crypt diff=git-crypt
