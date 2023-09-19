@@ -1,1 +1,1 @@
-include /etc/nginx/conf.d/include/server/*.nginx;
+include /etc/nginx/conf.d/include/*/server.nginx;
