@@ -25,6 +25,7 @@ RUN . /tmp/hostname.env && \
     rm -rf /var/oauth && \
     rm /tmp/hostname.env && \
     rm /etc/nginx/lua/auther.template.lua && \
+    rm /etc/nginx/lua/crypter.template.lua && \
     luarocks install lua-resty-openidc
 
 EXPOSE 80
