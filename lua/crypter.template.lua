@@ -3,13 +3,13 @@ ngx.log(ngx.STDERR, 'Loading crypter')
 local ffi = require('ffi')
 
 ffi.cdef [[
-  typedef struct {
+  typedef struct RustSlice {
     uint8_t *ptr;
     uintptr_t len;
     uintptr_t capacity;
   } RustSlice;
 
-  typedef struct {
+  typedef struct Slice {
     uint8_t *ptr;
     uintptr_t len;
   } Slice;
@@ -136,7 +136,7 @@ M.encrypt_user = function(user)
     return nil
   end
 
-  return ngx.encode_base64(intern_rust_string(encrypted))
+  return ngx.encode_base64(intern_slice(encrypted))
 end
 
 -- Tries to decrypt a user token from a base64 encoded Lua string
