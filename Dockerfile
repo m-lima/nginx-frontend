@@ -16,9 +16,12 @@ RUN . /tmp/hostname.env && \
     done; \
     mkdir /var/log/nginx && \
     . /var/oauth/oath.env && \
-    envsubst '\$CLIENT_ID \$CLIENT_SECRET \$COOKIE_SECRET \$HOST_NAME' \
+    envsubst '\$CLIENT_ID \$CLIENT_SECRET \$HOST_NAME' \
       < /etc/nginx/lua/auther.template.lua \
       > /etc/nginx/lua/auther.lua && \
+    envsubst '\$TOKEN_SECRET' \
+      < /etc/nginx/lua/crypter.template.lua \
+      > /etc/nginx/lua/crypter.lua && \
     rm -rf /var/oauth && \
     rm /tmp/hostname.env && \
     rm /etc/nginx/lua/auther.template.lua && \
