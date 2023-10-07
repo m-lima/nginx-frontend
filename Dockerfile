@@ -1,4 +1,4 @@
-FROM openresty/openresty:alpine-fat
+FROM openresty/openresty:1.21.4.2-1-alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
