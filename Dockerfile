@@ -15,6 +15,9 @@ RUN mkdir /var/log/nginx && \
     done; \
     rm /tmp/hostname.env && \
     . /var/oauth/oauth.env && \
+    [ "${CLIENT_ID}" ] && \
+    [ "${CLIENT_SECRET}" ] && \
+    [ "${TOKEN_SECRET}" ] && \
     envsubst '\$CLIENT_ID \$CLIENT_SECRET \$HOST_NAME' \
       < /var/oauth/lua/auther.template.lua \
       > /etc/nginx/lua/auther.lua && \
@@ -33,4 +36,3 @@ EXPOSE 443
 STOPSIGNAL SIGTERM
 
 CMD ["/usr/local/openresty/bin/openresty", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]
-
