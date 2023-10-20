@@ -171,8 +171,9 @@ for p in ${@}; do
 done
 
 if [[ "${1}" == "unit" ]]; then
-  unit
+  shift
+  unit ${@}
 else
-  build
+  build ${@}
 fi
 
