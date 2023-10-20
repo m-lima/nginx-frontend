@@ -1,4 +1,4 @@
-FROM openresty/openresty:1.21.4.2-1-alpine-fat
+FROM docker.io/openresty/openresty:1.21.4.2-1-alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
@@ -15,7 +15,7 @@ RUN . /tmp/hostname.env && \
       sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" "$conf"; \
     done; \
     mkdir /var/log/nginx && \
-    . /var/oauth/oath.env && \
+    . /var/oauth/oauth.env && \
     envsubst '\$CLIENT_ID \$CLIENT_SECRET \$HOST_NAME' \
       < /etc/nginx/lua/auther.template.lua \
       > /etc/nginx/lua/auther.lua && \
