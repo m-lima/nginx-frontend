@@ -164,7 +164,8 @@ function build {
     --publish 443:443 \
     --volume "${static}":/var/www/static:ro \
     ${volumes} \
-    --net nginx \
+    --network nginx \
+    --network host \
     --name nginx-frontend \
     nginx-frontend
 
