@@ -1,3 +1,14 @@
+# Required files:
+# oauth/oauth.env:
+#  - export CLIENT_ID=<oidc_id>
+#  - export CLIENT_SECRET=<oidc_secret>
+#  - export TOKEN_SECRET=<crypter_secret>
+# hostname.env
+#  - export HOST_NAME=<domain>
+#  - export HOST_NAME_REGEX=<domain>\\\\<tld>
+# certbot/cert:
+#  - TLS pem files
+
 FROM docker.io/openresty/openresty:1.21.4.2-1-alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
