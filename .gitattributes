@@ -1,5 +1,2 @@
 # Servers
 conf/services/** filter=git-crypt diff=git-crypt
-
-# Configuration
-hostname.env     filter=git-crypt diff=git-crypt

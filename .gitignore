@@ -7,6 +7,7 @@ www
 # Secrets
 oauth/oauth.env
 certbot/data
+hostname.env
 
 # Backup ignored files
 backup
