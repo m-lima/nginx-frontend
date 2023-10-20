@@ -14,7 +14,7 @@ FROM docker.io/openresty/openresty:1.21.4.2-1-alpine-fat
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
 COPY certbot/data/cert /var/cert
-COPY oauth /var/oauth
+COPY oauth /tmp/oauth
 COPY hostname.env /tmp/hostname.env
 
 RUN mkdir /var/log/nginx && \
@@ -25,18 +25,18 @@ RUN mkdir /var/log/nginx && \
       sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" "$conf"; \
     done; \
     rm /tmp/hostname.env && \
-    . /var/oauth/oauth.env && \
+    . /tmp/oauth/oauth.env && \
     [ "${CLIENT_ID}" ] && \
     [ "${CLIENT_SECRET}" ] && \
     [ "${TOKEN_SECRET}" ] && \
     envsubst '\$CLIENT_ID \$CLIENT_SECRET \$HOST_NAME' \
-      < /var/oauth/lua/auther.template.lua \
+      < /tmp/oauth/lua/auther.template.lua \
       > /etc/nginx/lua/auther.lua && \
     envsubst '\$TOKEN_SECRET' \
-      < /var/oauth/lua/crypter.template.lua \
+      < /tmp/oauth/lua/crypter.template.lua \
       > /etc/nginx/lua/crypter.lua && \
-    mv /var/oauth/lib/libcrypter.so /usr/local/lib/. && \
-    rm -rf /var/oauth && \
+    mv /tmp/oauth/lib/libcrypter.so /usr/local/lib/. && \
+    rm -rf /tmp/oauth && \
     luarocks install lua-resty-openidc 1.7.6-3
 
 EXPOSE 80
