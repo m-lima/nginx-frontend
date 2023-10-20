@@ -10,13 +10,13 @@ function usage {
   echo "  ${base} unit [-d]"
   echo
   echo "COMMANDS"
-  echo "  unit                 Print a systemd unit file and quit"
+  echo "  unit               Print a systemd unit file and quit"
   echo
   echo "OPTIONS"
-  echo "  -v <volume>[:<path>] Attach the given volume (at path) to /var/www/<volume>"
-  echo "  -d                   Use docker instead of podman"
-  echo "  -c                   Stop and start the service"
-  echo "  -h                   Print this help message"
+  echo "  -v <name>[:<path>] Attach the given volume to <name>:/var/www/<name> or <path>:/var/www/<name>"
+  echo "  -d                 Use docker instead of podman"
+  echo "  -c                 Stop and start the service"
+  echo "  -h                 Print this help message"
   echo
   echo "EXAMPLE"
   echo "  ${base} -v one -c -v two:/tmp/www"
