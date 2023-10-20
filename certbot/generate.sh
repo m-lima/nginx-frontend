@@ -4,8 +4,8 @@ function usage {
   local base=`basename "${0}"`
   echo "HELP"
   echo "  ${base} will generate letsencrypt certificates using godaddy DNS challenge"
-  echo "  Godaddy keys are expected to be in var/godaddy_credentials.ini"
-  echo "  Generated certificates will be in etc/archive/<domain>/"
+  echo "  Godaddy keys are expected to be in data/var/godaddy_credentials.ini"
+  echo "  Generated certificates will be in data/etc/archive/<domain>/"
   echo
   echo "USAGE"
   echo "  ${base} <domain> [OPTIONS]"
@@ -73,14 +73,15 @@ while [ "${1}" ]; do
   shift
 done
 
-if [ ! -f "${base}/var/godaddy_credentials.ini" ]; then
-  error "Missing godaddy credentials file at" "${base}/var/godaddy_credentials.ini"
+if [ ! -f "${base}/data/var/godaddy_credentials.ini" ]; then
+  error "Missing godaddy credentials file at" "${base}/data/var/godaddy_credentials.ini"
 fi
 
-[ -d "${base}/../cert" ] || mkdir "${base}/../cert"
-[ -d "${base}/etc" ] || mkdir "${base}/etc"
+[ -d "${base}/data" ] || mkdir "${base}/data"
+[ -d "${base}/data/cert" ] || mkdir "${base}/data/cert"
+[ -d "${base}/data/etc" ] || mkdir "${base}/data/etc"
 
-echo -n "Generating certificates in ${base}/etc/archive/${domain}/ for '${domain}'"
+echo -n "Generating certificates in ${base}/data/etc/archive/${domain}/ for '${domain}'"
 if [ "${wildcard}" ]; then
   echo -n " and '${wildcard}'"
 fi
@@ -94,8 +95,8 @@ fi
 
 ${pod} run --rm \
   --name certbot-godaddy \
-  -v ${base}/etc:/etc/letsencrypt \
-  -v ${base}/var:/var/lib/letsencrypt \
+  -v ${base}/data/etc:/etc/letsencrypt \
+  -v ${base}/data/var:/var/lib/letsencrypt \
   --cap-drop=all \
   docker.io/miigotu/certbot-dns-godaddy \
     certbot certonly \
@@ -109,11 +110,11 @@ ${pod} run --rm \
     --agree-tos \
     --register-unsafely-without-email \
     ${domain} \
-&& cp "${base}/etc/live/${domain}/"* "${base}/../cert/."
+&& cp "${base}/data/etc/live/${domain}/"* "${base}/data/cert/."
 
 # ${pod} run -it --rm --name certbot \
-#   -v ${base}/etc:/etc/letsencrypt \
-#   -v ${base}/var:/var/lib/letsencrypt \
+#   -v ${base}/data/etc:/etc/letsencrypt \
+#   -v ${base}/data/var:/var/lib/letsencrypt \
 #   docker.io/certbot/certbot \
 #   certonly --manual ${domain} \
 #   --preferred-challenges dns \

@@ -2,8 +2,8 @@
 **/\.*.swp
 
 # Secrets
-cert
 oauth
+certbot/data
 
 # Backup ignored files
 backup

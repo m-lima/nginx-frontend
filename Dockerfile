@@ -2,11 +2,10 @@ FROM docker.io/openresty/openresty:1.21.4.2-1-alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
-COPY cert /var/cert
+COPY certbot/data/cert /var/cert
 COPY oauth /var/oauth
 COPY lua /etc/nginx/lua
 COPY hostname.env /tmp/hostname.env
-# COPY --from=crypter /src/target/release/libcrypter.so /usr/local/lib/.
 COPY lib/libcrypter.so /usr/local/lib/.
 
 RUN . /tmp/hostname.env && \
