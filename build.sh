@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
+service_name="nginx-frontend"
+
 function usage {
-  local base=`basename "${0}"`
+  local base=$(basename "${0}")
   echo "HELP"
-  echo "  Builds and prepares a nginx-frontend container"
+  echo "  Builds and prepares a ${service_name} container"
   echo
   echo "USAGE"
   echo "  ${base} [OPTIONS]"
@@ -20,7 +22,7 @@ function usage {
   echo
   echo "EXAMPLE"
   echo "  ${base} -v one -c -v two:/tmp/www"
-  echo "  ${base} unit -d > nginx-frontend.service"
+  echo "  ${base} unit -d > ${service_name}.service"
 }
 
 function error {
@@ -53,9 +55,9 @@ function unit {
   fi
 
   if [[ "${pod}" == "podman" ]]; then
-    ${pod} generate systemd --name nginx-frontend | sed 's/^Description=.*$/Description=Nginx gateway into container network/g'
+    ${pod} generate systemd --name "${service_name}" | sed 's/^Description=.*$/Description=Nginx gateway into container network/g'
   else
-    bin=`which "${pod}"`
+    bin=$(which "${pod}")
 
     cat <<EOF
 [Unit]
@@ -65,8 +67,8 @@ Requires=${pod}.service
 
 [Service]
 Restart=always
-ExecStart=${bin} start -a nginx-frontend
-ExecStop=${bin} stop nginx-frontend
+ExecStart=${bin} start -a ${service_name}
+ExecStop=${bin} stop ${service_name}
 
 [Install]
 WantedBy=multi-user.target
@@ -77,13 +79,17 @@ EOF
 }
 
 function build {
-  local base=`dirname "${0}"`
-  base=`realpath "${base}"`
+  local base=$(dirname "${0}")
+  base=$(realpath "${base}")
   local pod="podman"
   local cycle=""
   local output
   local volumes=""
-  local autovolumes=`for f in conf/services/enabled/*/server.nginx; do sed -rn 's~^[[:space:]]*root[[:space:]]+/var/www/(.+);[[:space:]]*$~\1~p' $f; done`
+  local autovolumes=$(
+    for f in $(find conf/services/enabled -type f -depth 2 -name server.nginx); do
+      sed -rn 's~^[[:space:]]*root[[:space:]]+/var/www/(.+);[[:space:]]*$~\1~p' $f
+    done
+  )
   local volume_name
   local volume_path
 
@@ -93,8 +99,8 @@ function build {
         shift
         if [ "${1}" ]; then
           if [[ "${1}" =~ ^[^:/]+(:/.*)?$ ]]; then
-            volume_name=`cut -d':' -f1 <<<"${1}"`
-            volume_path=`cut -d':' -f2 <<<"${1}"`
+            volume_name=$(cut -d':' -f1 <<<"${1}")
+            volume_path=$(cut -d':' -f2 <<<"${1}")
             if [ "${volume_path}" ]; then
               if [ ! -d "${volume_path}" ]; then
                 error "Volume path does not exist:" "${1}"
@@ -105,7 +111,7 @@ function build {
             if ! grep "${volume_name}" <<<"${autovolumes}" &> /dev/null ; then
               echo "[33mAdding volume that is not detected as required:[m ${volume_name}"
             else
-              autovolumes=`sed "/${volume_name}/d" <<<"${autovolumes}"`
+              autovolumes=$(sed "/${volume_name}/d" <<<"${autovolumes}")
             fi
             volumes="-v ${volume_path}:/var/www/${volume_name}:ro${volumes+ $volumes}"
           else
@@ -129,28 +135,28 @@ function build {
 
   if [ ${cycle} ]; then
     echo "[34mStopping the service[m"
-    systemctl stop nginx-frontend
+    systemctl stop "${service_name}"
   fi
 
   echo "[34mBuilding the image[m"
-  if ! ${pod} build -t nginx-frontend "${base}"; then
+  if ! ${pod} build -t "${service_name}" "${base}"; then
     exit 1
   fi
 
   echo "[34mChecking for running instances[m"
-  output=`${pod} ps --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
+  output=$(${pod} ps --format '{{.ID}} {{.Names}}' | grep "${service_name}")
   if [ "${output}" ]; then
-    ${pod} stop `cut -d' ' -f1 <<<"${output}"`
+    ${pod} stop $(cut -d' ' -f1 <<<"${output}")
   fi
 
   echo "[34mChecking for existing containers[m"
-  output=`${pod} ps -a --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
+  output=$(${pod} ps -a --format '{{.ID}} {{.Names}}' | grep "${service_name}")
   if [ "${output}" ]; then
-    ${pod} rm `cut -d' ' -f1 <<<"${output}"`
+    ${pod} rm $(cut -d' ' -f1 <<<"${output}")
   fi
 
   echo "[34mChecking for existing network[m"
-  output=`${pod} network ls --format '{{.Name}}' | grep nginx`
+  output=$(${pod} network ls --format '{{.Name}}' | grep nginx)
   if [ ! "${output}" ]; then
     ${pod} network create nginx
   fi
@@ -162,12 +168,12 @@ function build {
     ${volumes} \
     --network nginx \
     --network host \
-    --name nginx-frontend \
-    nginx-frontend
+    --name "${service_name}" \
+    "${service_name}"
 
   if [ ${cycle} ]; then
     echo "[34mStarting the service[m"
-    systemctl start nginx-frontend
+    systemctl start "${service_name}"
   fi
 }
 
