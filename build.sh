@@ -10,17 +10,16 @@ function usage {
   echo "  ${base} unit [-d]"
   echo
   echo "COMMANDS"
-  echo "  unit        Print a systemd unit file and quit"
+  echo "  unit                 Print a systemd unit file and quit"
   echo
   echo "OPTIONS"
-  echo "  -v <volume> Attach the given volume to /var/www/<volume>"
-  echo "  -s <path>   Path to serve public static files from (defaults to www/public)"
-  echo "  -d          Use docker instead of podman"
-  echo "  -c          Stop and start the service"
-  echo "  -h          Print this help message"
+  echo "  -v <volume>[:<path>] Attach the given volume (at path) to /var/www/<volume>"
+  echo "  -d                   Use docker instead of podman"
+  echo "  -c                   Stop and start the service"
+  echo "  -h                   Print this help message"
   echo
   echo "EXAMPLE"
-  echo "  ${base} -v one -c -v two"
+  echo "  ${base} -v one -c -v two:/tmp/www"
   echo "  ${base} unit -d > nginx-frontend.service"
 }
 
@@ -81,44 +80,36 @@ function build {
   local base=`dirname "${0}"`
   base=`realpath "${base}"`
   local pod="podman"
-  local static=""
-  local volumes=""
   local cycle=""
   local output
+  local volumes=""
   local autovolumes=`for f in conf/services/enabled/*/server.nginx; do sed -rn 's~^[[:space:]]*root[[:space:]]+/var/www/(.+);[[:space:]]*$~\1~p' $f; done`
+  local volume_name
+  local volume_path
 
   while [ "${1}" ]; do
     case "${1}" in
       "-v")
         shift
         if [ "${1}" ]; then
-          if [[ "${1}" =~ ^[^/]+$ ]]; then
-            if ! grep "${1}" <<<"${autovolumes}" &> /dev/null ; then
-              echo "[33mAdding volume that is not detected as required:[m ${1}"
-            else
-              autovolumes=`sed "/${1}/d" <<<"${autovolumes}"`
+          if [[ "${1}" =~ ^[^:/]+(:/.*)?$ ]]; then
+            volume_name=`cut -d':' -f1 <<<"${1}"`
+            volume_path=`cut -d':' -f2 <<<"${1}"`
+            if [ ! "${volume_path}" ]; then
+              volume_path="${volume_name}"
             fi
-            volumes="-v ${1}:/var/www/${1}:ro${volumes+ $volumes}"
+
+            if ! grep "${volume_name}" <<<"${autovolumes}" &> /dev/null ; then
+              echo "[33mAdding volume that is not detected as required:[m ${volume_name}"
+            else
+              autovolumes=`sed "/${volume_name}/d" <<<"${autovolumes}"`
+            fi
+            volumes="-v ${volume_path}:/var/www/${volume_name}:ro${volumes+ $volumes}"
           else
-            error "Invalid volume name:" "${1}"
+            error "Invalid volume name. Expected <name>[:<absolute_path>]. Got:" "${1}"
           fi
         else
           error "Expected a volume name for -v"
-        fi
-        ;;
-      "-s")
-        if [ "${static}" ]; then
-          error "Static hosting path specified multiple times"
-        fi
-        shift
-        if [ "${1}" ]; then
-          if [ -d "${1}" ]; then
-            static=`realpath "${1}"`
-          else
-            error "Path for static hosting does not exist:" "${1}"
-          fi
-        else
-          error "Expected a path for -s"
         fi
         ;;
       "-d") pod="docker" ;;
@@ -161,19 +152,10 @@ function build {
     ${pod} network create nginx
   fi
 
-  if [ ! "${static}" ]; then
-    static="${base}/www/public"
-    if [ ! -d "${static}" ]; then
-      echo "[34mCreating default static serving point at[m ${static}"
-      mkdir -p "${static}"
-    fi
-  fi
-
   echo "[34mCreating the container[m"
   ${pod} create \
     --publish 80:80 \
     --publish 443:443 \
-    --volume "${static}":/var/www/static:ro \
     ${volumes} \
     --network nginx \
     --network host \
