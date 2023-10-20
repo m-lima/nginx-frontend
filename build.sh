@@ -41,7 +41,6 @@ function unit {
   local pod bin
   pod="podman"
 
-  shift
   if [ "${1}" ]; then
     if [[ "${1}" == "-d" ]]; then
       pod="docker"
@@ -54,13 +53,13 @@ function unit {
     error "Not found:" "${pod}"
   fi
 
-  bin=`which "${podman}"`
+  bin=`which "${pod}"`
 
   cat <<EOF
 [Unit]
 Description=Web Gateway for ${HOST}
-After=${1}.service
-Requires=${1}.service
+After=${pod}.service
+Requires=${pod}.service
 
 [Service]
 Restart=always
