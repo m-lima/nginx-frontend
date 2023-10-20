@@ -116,6 +116,7 @@ function build {
   done
 
   if [ ${cycle} ]; then
+    echo "[34mStopping the service[m"
     systemctl stop nginx-frontend
   fi
 
@@ -148,7 +149,7 @@ function build {
   fi
 
   echo "[34mCreating the container[m"
-  echo ${pod} create \
+  ${pod} create \
     --publish 80:80 \
     --publish 443:443 \
     --volume "${static}":/var/www/static:ro \
@@ -158,6 +159,7 @@ function build {
     nginx-frontend
 
   if [ ${cycle} ]; then
+    echo "[34mStarting the service[m"
     systemctl start nginx-frontend
   fi
 }
