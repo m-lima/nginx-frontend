@@ -4,28 +4,28 @@ COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
 COPY certbot/data/cert /var/cert
 COPY oauth /var/oauth
-COPY lua /etc/nginx/lua
 COPY hostname.env /tmp/hostname.env
-COPY lib/libcrypter.so /usr/local/lib/.
 
-RUN . /tmp/hostname.env && \
+RUN mkdir /var/log/nginx && \
+    mkdir /etc/nginx/lua && \
+    . /tmp/hostname.env && \
     for conf in `find /etc/nginx -name '*.nginx' -type f`; do \
       sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" "$conf" && \
       sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" "$conf"; \
     done; \
-    mkdir /var/log/nginx && \
+    rm /tmp/hostname.env && \
     . /var/oauth/oauth.env && \
     envsubst '\$CLIENT_ID \$CLIENT_SECRET \$HOST_NAME' \
-      < /etc/nginx/lua/auther.template.lua \
+      < /var/oauth/lua/auther.template.lua \
       > /etc/nginx/lua/auther.lua && \
     envsubst '\$TOKEN_SECRET' \
-      < /etc/nginx/lua/crypter.template.lua \
+      < /var/oauth/lua/crypter.template.lua \
       > /etc/nginx/lua/crypter.lua && \
+    mv /var/oauth/lib/libcrypter.so /usr/local/lib/. && \
     rm -rf /var/oauth && \
-    rm /tmp/hostname.env && \
     rm /etc/nginx/lua/auther.template.lua && \
     rm /etc/nginx/lua/crypter.template.lua && \
-    luarocks install lua-resty-openidc
+    luarocks install lua-resty-openidc 1.7.6-3
 
 EXPOSE 80
 EXPOSE 443

@@ -2,7 +2,7 @@
 **/\.*.swp
 
 # Secrets
-oauth
+oauth/oauth.env
 certbot/data
 
 # Backup ignored files
