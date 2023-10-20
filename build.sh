@@ -95,7 +95,10 @@ function build {
           if [[ "${1}" =~ ^[^:/]+(:/.*)?$ ]]; then
             volume_name=`cut -d':' -f1 <<<"${1}"`
             volume_path=`cut -d':' -f2 <<<"${1}"`
-            if [ ! "${volume_path}" ]; then
+            if [ "${volume_path}" ]; then
+              if [ ! -d "${volume_path}" ]; then
+                error "Volume path does not exist:" "${1}"
+              fi
               volume_path="${volume_name}"
             fi
 
@@ -106,7 +109,7 @@ function build {
             fi
             volumes="-v ${volume_path}:/var/www/${volume_name}:ro${volumes+ $volumes}"
           else
-            error "Invalid volume name. Expected <name>[:<absolute_path>]. Got:" "${1}"
+            error "Expected <name>[:<absolute_path>] for volume definition:" "${1}"
           fi
         else
           error "Expected a volume name for -v"
