@@ -85,6 +85,7 @@ function build {
   local volumes=""
   local cycle=""
   local output
+  local autovolumes=`for f in conf/services/enabled/*/server.nginx; do sed -rn 's~^[[:space:]]*root[[:space:]]+/var/www/(.+);[[:space:]]*$~\1~p' $f; done`
 
   while [ "${1}" ]; do
     case "${1}" in
@@ -92,6 +93,11 @@ function build {
         shift
         if [ "${1}" ]; then
           if [[ "${1}" =~ ^[^/]+$ ]]; then
+            if ! grep "${1}" <<<"${autovolumes}" &> /dev/null ; then
+              echo "[33mAdding volume that is not detected as required:[m ${1}"
+            else
+              autovolumes=`sed "/${1}/d" <<<"${autovolumes}"`
+            fi
             volumes="-v ${1}:/var/www/${1}:ro${volumes+ $volumes}"
           else
             error "Invalid volume name:" "${1}"
@@ -121,6 +127,11 @@ function build {
     esac
     shift
   done
+
+  if [ "${autovolumes}" ]; then
+    echo "[33mNot all volumes detected as required were added:[m"
+    echo "${autovolumes}"
+  fi
 
   if [ ${cycle} ]; then
     echo "[34mStopping the service[m"
