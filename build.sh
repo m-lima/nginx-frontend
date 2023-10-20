@@ -75,7 +75,8 @@ EOF
 }
 
 function build {
-  local base="`dirname \"${0}\"`"
+  local base=`dirname "${0}"`
+  base=`realpath "${base}"`
   local pod="podman"
   local static="${base}/www/public"
   local volumes=""
@@ -100,7 +101,7 @@ function build {
         shift
         if [ "${1}" ]; then
           if [ -d "${1}" ]; then
-            static="${1}"
+            static=`realpath "${1}"`
           else
             error "Path for static hosting does not exist:" "${1}"
           fi
