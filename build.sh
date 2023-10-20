@@ -14,6 +14,7 @@ function usage {
   echo
   echo "OPTIONS"
   echo "  -v <volume> Attach the given volume to /var/www/<volume>"
+  echo "  -s <path>   Path to serve public static files from (defaults to www/public)"
   echo "  -d          Use docker instead of podman"
   echo "  -c          Stop and start the service"
   echo "  -h          Print this help message"
@@ -83,6 +84,7 @@ fi
 
 cd "`dirname "${0}"`"
 
+static="${base}/www/public"
 volumes=""
 cycle=""
 
@@ -98,6 +100,18 @@ while [ "${1}" ]; do
         fi
       else
         error "Expected a volume name for -v"
+      fi
+      ;;
+    "-s")
+      shift
+      if [ "${1}" ]; then
+        if [ -d "${1}" ]; then
+          static="${1}"
+        else
+          error "Path for static hosting does not exist:" "${1}"
+        fi
+      else
+        error "Expected a path for -s"
       fi
       ;;
     "-d") pod="docker" ;;
@@ -134,11 +148,16 @@ if [ ! "${output}" ]; then
   ${pod} network create nginx
 fi
 
+if [[ "${static}" == "${base}/www/public" ]]; then
+  echo "[34mCreating default static serving point at[m ${static}"
+  mkdir -p "${static}"
+fi
+
 echo "[34mCreating the container[m"
-${pod} create \
+echo ${pod} create \
   --publish 80:80 \
   --publish 443:443 \
-  --volume /var/www/html/public:/var/www/static:ro \
+  --volume "${static}":/var/www/static:ro \
   ${volumes} \
   --net nginx \
   --name nginx-frontend \

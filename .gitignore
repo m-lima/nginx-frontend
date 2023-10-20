@@ -1,6 +1,9 @@
 # Vim
 **/\.*.swp
 
+# Default public static
+www
+
 # Secrets
 oauth/oauth.env
 certbot/data
