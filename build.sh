@@ -54,13 +54,13 @@ function unit {
   fi
 
   if [[ "${pod}" == "podman" ]]; then
-    ${pod} generate systemd --name nginx-frontend | sed 's/^Description=.*$/Description=Web Gateway for '"${HOST}"'/g'
+    ${pod} generate systemd --name nginx-frontend | sed 's/^Description=.*$/Description=Nginx gateway into container network/g'
   else
     bin=`which "${pod}"`
 
     cat <<EOF
 [Unit]
-Description=Web Gateway for ${HOST}
+Description=Nginx gateway into container network
 After=${pod}.service
 Requires=${pod}.service
 
