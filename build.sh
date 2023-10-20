@@ -15,7 +15,7 @@ function usage {
   echo "  unit               Print a systemd unit file and quit"
   echo
   echo "OPTIONS"
-  echo "  -v <name>[:<path>] Attach the given volume to <name>:/var/www/<name> or <path>:/var/www/<name>"
+  echo "  -v <name>:[<path>] Attach the given volume to <name>:/var/www/<name> or <path>:/var/www/<name>"
   echo "  -d                 Use docker instead of podman"
   echo "  -c                 Stop and start the service"
   echo "  -h                 Print this help message"
@@ -98,7 +98,7 @@ function build {
       "-v")
         shift
         if [ "${1}" ]; then
-          if [[ "${1}" =~ ^[^:/]+(:/.*)?$ ]]; then
+          if [[ "${1}" =~ ^[^:/]+:(/.*)?$ ]]; then
             volume_name=$(cut -d':' -f1 <<<"${1}")
             volume_path=$(cut -d':' -f2 <<<"${1}")
             if [ "${volume_path}" ]; then
@@ -115,7 +115,7 @@ function build {
             fi
             volumes="-v ${volume_path}:/var/www/${volume_name}:ro${volumes+ $volumes}"
           else
-            error "Expected <name>[:<absolute_path>] for volume definition:" "${1}"
+            error "Expected <name>:[<absolute_path>] for volume definition:" "${1}"
           fi
         else
           error "Expected a volume name for -v"
