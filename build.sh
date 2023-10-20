@@ -168,7 +168,6 @@ function build {
     --publish 443:443 \
     ${volumes} \
     --network nginx \
-    --network host \
     --name "${service_name}" \
     "${service_name}"
 
