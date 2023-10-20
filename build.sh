@@ -86,7 +86,7 @@ function build {
   local output
   local volumes=""
   local autovolumes=$(
-    for f in $(find conf/services/enabled -type f -depth 2 -name server.nginx); do
+    for f in $(find -L conf/services/enabled -maxdepth 2 -type f -name server.nginx); do
       sed -rn 's~^[[:space:]]*root[[:space:]]+/var/www/(.+);[[:space:]]*$~\1~p' $f
     done
   )
