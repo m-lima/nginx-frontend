@@ -38,31 +38,7 @@ function error {
 }
 
 function unit {
-  bin=`which "${1}"`
-  cat <<EOF
-[Unit]
-Description=Web Gateway for ${HOST}
-After=${1}.service
-Requires=${1}.service
-
-[Service]
-Restart=always
-ExecStart=${bin} start -a nginx-frontend
-ExecStop=${bin} stop nginx-frontend
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
-for p in ${@}; do
-  if [[ "${p}" == "-h" ]]; then
-    usage
-    exit
-  fi
-done
-
-if [[ "${1}" == "unit" ]]; then
+  local pod bin
   pod="podman"
 
   shift
@@ -78,91 +54,124 @@ if [[ "${1}" == "unit" ]]; then
     error "Not found:" "${pod}"
   fi
 
-  unit ${pod}
+  bin=`which "${podman}"`
+
+  cat <<EOF
+[Unit]
+Description=Web Gateway for ${HOST}
+After=${1}.service
+Requires=${1}.service
+
+[Service]
+Restart=always
+ExecStart=${bin} start -a nginx-frontend
+ExecStop=${bin} stop nginx-frontend
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
   exit
-fi
+}
 
-cd "`dirname "${0}"`"
+function build {
+  local base="`dirname \"${0}\"`"
+  local pod="podman"
+  local static="${base}/www/public"
+  local volumes=""
+  local cycle=""
+  local output
 
-static="${base}/www/public"
-volumes=""
-cycle=""
-
-while [ "${1}" ]; do
-  case "${1}" in
-    "-v")
-      shift
-      if [ "${1}" ]; then
-        if [[ "${1}" =~ ^[^/]+$ ]]; then
-          volumes="-v ${1}:/var/www/${1}:ro${volumes+ $volumes}"
+  while [ "${1}" ]; do
+    case "${1}" in
+      "-v")
+        shift
+        if [ "${1}" ]; then
+          if [[ "${1}" =~ ^[^/]+$ ]]; then
+            volumes="-v ${1}:/var/www/${1}:ro${volumes+ $volumes}"
+          else
+            error "Invalid volume name:" "${1}"
+          fi
         else
-          error "Invalid volume name:" "${1}"
+          error "Expected a volume name for -v"
         fi
-      else
-        error "Expected a volume name for -v"
-      fi
-      ;;
-    "-s")
-      shift
-      if [ "${1}" ]; then
-        if [ -d "${1}" ]; then
-          static="${1}"
+        ;;
+      "-s")
+        shift
+        if [ "${1}" ]; then
+          if [ -d "${1}" ]; then
+            static="${1}"
+          else
+            error "Path for static hosting does not exist:" "${1}"
+          fi
         else
-          error "Path for static hosting does not exist:" "${1}"
+          error "Expected a path for -s"
         fi
-      else
-        error "Expected a path for -s"
-      fi
-      ;;
-    "-d") pod="docker" ;;
-    "-c") cycle="1" ;;
-    *) error "Unknown parameter:" "${1}" ;;
-  esac
-  shift
+        ;;
+      "-d") pod="docker" ;;
+      "-c") cycle="1" ;;
+      *) error "Unknown parameter:" "${1}" ;;
+    esac
+    shift
+  done
+
+  if [ ${cycle} ]; then
+    systemctl stop nginx-frontend
+  fi
+
+  echo "[34mBuilding the image[m"
+  if ! ${pod} build -t nginx-frontend "${base}"; then
+    exit 1
+  fi
+
+  echo "[34mChecking for running instances[m"
+  output=`${pod} ps --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
+  if [ "${output}" ]; then
+    ${pod} stop `cut -d' ' -f1 <<<"${output}"`
+  fi
+
+  echo "[34mChecking for existing containers[m"
+  output=`${pod} ps -a --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
+  if [ "${output}" ]; then
+    ${pod} rm `cut -d' ' -f1 <<<"${output}"`
+  fi
+
+  echo "[34mChecking for existing network[m"
+  output=`${pod} network ls --format '{{.Names}}' | grep nginx`
+  if [ ! "${output}" ]; then
+    ${pod} network create nginx
+  fi
+
+  if [[ "${static}" == "${base}/www/public" ]]; then
+    echo "[34mCreating default static serving point at[m ${static}"
+    mkdir -p "${static}"
+  fi
+
+  echo "[34mCreating the container[m"
+  echo ${pod} create \
+    --publish 80:80 \
+    --publish 443:443 \
+    --volume "${static}":/var/www/static:ro \
+    ${volumes} \
+    --net nginx \
+    --name nginx-frontend \
+    nginx-frontend
+
+  if [ ${cycle} ]; then
+    systemctl start nginx-frontend
+  fi
+}
+
+for p in ${@}; do
+  if [[ "${p}" == "-h" ]]; then
+    usage
+    exit
+  fi
 done
 
-if [ ${cycle} ]; then
-  systemctl stop nginx-frontend
+if [[ "${1}" == "unit" ]]; then
+  unit
+else
+  build
 fi
 
-echo "[34mBuilding the image[m"
-if ! ${pod} build -t nginx-frontend .; then
-  exit 1
-fi
-
-echo "[34mChecking for running instances[m"
-output=`${pod} ps --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
-if [ "${output}" ]; then
-  ${pod} stop `cut -d' ' -f1 <<<"${output}"`
-fi
-
-echo "[34mChecking for existing containers[m"
-output=`${pod} ps -a --format '{{.ID}} {{.Names}}' | grep nginx-frontend`
-if [ "${output}" ]; then
-  ${pod} rm `cut -d' ' -f1 <<<"${output}"`
-fi
-
-echo "[34mChecking for existing network[m"
-output=`${pod} network ls --format '{{.Names}}' | grep nginx`
-if [ ! "${output}" ]; then
-  ${pod} network create nginx
-fi
-
-if [[ "${static}" == "${base}/www/public" ]]; then
-  echo "[34mCreating default static serving point at[m ${static}"
-  mkdir -p "${static}"
-fi
-
-echo "[34mCreating the container[m"
-echo ${pod} create \
-  --publish 80:80 \
-  --publish 443:443 \
-  --volume "${static}":/var/www/static:ro \
-  ${volumes} \
-  --net nginx \
-  --name nginx-frontend \
-  nginx-frontend
-
-if [ ${cycle} ]; then
-  systemctl start nginx-frontend
-fi
