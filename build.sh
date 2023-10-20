@@ -138,7 +138,7 @@ function build {
   fi
 
   echo "[34mChecking for existing network[m"
-  output=`${pod} network ls --format '{{.Names}}' | grep nginx`
+  output=`${pod} network ls --format '{{.Name}}' | grep nginx`
   if [ ! "${output}" ]; then
     ${pod} network create nginx
   fi
