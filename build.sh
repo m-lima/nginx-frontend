@@ -105,6 +105,7 @@ function build {
               if [ ! -d "${volume_path}" ]; then
                 error "Volume path does not exist:" "${1}"
               fi
+            else
               volume_path="${volume_name}"
             fi
 
