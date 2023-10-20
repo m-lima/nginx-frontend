@@ -37,8 +37,6 @@ RUN mkdir /var/log/nginx && \
       > /etc/nginx/lua/crypter.lua && \
     mv /var/oauth/lib/libcrypter.so /usr/local/lib/. && \
     rm -rf /var/oauth && \
-    rm /etc/nginx/lua/auther.template.lua && \
-    rm /etc/nginx/lua/crypter.template.lua && \
     luarocks install lua-resty-openidc 1.7.6-3
 
 EXPOSE 80
