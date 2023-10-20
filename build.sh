@@ -53,9 +53,12 @@ function unit {
     error "Not found:" "${pod}"
   fi
 
-  bin=`which "${pod}"`
+  if [[ "${pod}" == "podman" ]]; then
+    ${pod} generate systemd --name nginx-frontend | sed 's/^Description=.*$/Description=Web Gateway for '"${HOST}"'/g'
+  else
+    bin=`which "${pod}"`
 
-  cat <<EOF
+    cat <<EOF
 [Unit]
 Description=Web Gateway for ${HOST}
 After=${pod}.service
@@ -69,6 +72,7 @@ ExecStop=${bin} stop nginx-frontend
 [Install]
 WantedBy=multi-user.target
 EOF
+  fi
 
   exit
 }
@@ -77,7 +81,7 @@ function build {
   local base=`dirname "${0}"`
   base=`realpath "${base}"`
   local pod="podman"
-  local static="${base}/www/public"
+  local static=""
   local volumes=""
   local cycle=""
   local output
@@ -97,6 +101,9 @@ function build {
         fi
         ;;
       "-s")
+        if [ "${static}" ]; then
+          error "Static hosting path specified multiple times"
+        fi
         shift
         if [ "${1}" ]; then
           if [ -d "${1}" ]; then
@@ -143,9 +150,12 @@ function build {
     ${pod} network create nginx
   fi
 
-  if [[ "${static}" == "${base}/www/public" ]]; then
-    echo "[34mCreating default static serving point at[m ${static}"
-    mkdir -p "${static}"
+  if [ ! "${static}" ]; then
+    static="${base}/www/public"
+    if [ ! -d "${static}" ]; then
+      echo "[34mCreating default static serving point at[m ${static}"
+      mkdir -p "${static}"
+    fi
   fi
 
   echo "[34mCreating the container[m"
