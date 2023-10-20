@@ -1,2 +1,2 @@
 # Servers
-conf/services/** filter=git-crypt diff=git-crypt
+conf/services/available/** filter=git-crypt diff=git-crypt
