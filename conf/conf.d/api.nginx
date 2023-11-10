@@ -22,9 +22,6 @@ server {
 
   charset utf-8;
 
-  access_log /var/log/nginx/api.access.log;
-  error_log /var/log/nginx/api.error.log warn;
-
   location /favicon.ico {
     return 404;
   }

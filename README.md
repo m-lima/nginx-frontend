@@ -48,7 +48,6 @@ Add a CNAME record to the DNS poiting to '@'
         ssl_protocols TLSv1.2;
 
         charset utf-8;
-        access_log /var/log/nginx/<server>.access.log main;
 
         location / {
           expires 30d;
@@ -83,7 +82,6 @@ Add a CNAME record to the DNS poiting to '@'
         server_name <server>.server.com;
 
         charset utf-8;
-        access_log /var/log/nginx/<server_name>.access.log main;
 
         location ~ .* {
           proxy_set_header X-Real-IP $remote_addr;
