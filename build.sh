@@ -21,7 +21,7 @@ function usage {
   echo "  -h                 Print this help message"
   echo
   echo "EXAMPLE"
-  echo "  ${base} -v one -c -v two:/tmp/www"
+  echo "  ${base} -v one: -c -v two:/tmp/www"
   echo "  ${base} unit -d > ${service_name}.service"
 }
 
