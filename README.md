@@ -43,12 +43,6 @@ Add a CNAME record to the DNS poiting to '@'
         listen 443 ssl http2;
         server_name <server>.server.com;
 
-        ssl_certificate /var/cert/server.com/fullchain.pem;
-        ssl_certificate_key /var/cert/server.com/privkey.pem;
-        ssl_protocols TLSv1.2;
-
-        charset utf-8;
-
         location / {
           expires 30d;
 
@@ -80,8 +74,6 @@ Add a CNAME record to the DNS poiting to '@'
       server {
         listen 80;
         server_name <server>.server.com;
-
-        charset utf-8;
 
         location ~ .* {
           proxy_set_header X-Real-IP $remote_addr;

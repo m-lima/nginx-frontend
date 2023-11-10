@@ -17,11 +17,6 @@ server {
   listen 443 ssl;
   server_name api.$HOST_NAME;
 
-  ssl_certificate /var/cert/fullchain.pem;
-  ssl_certificate_key /var/cert/privkey.pem;
-
-  charset utf-8;
-
   location /favicon.ico {
     return 404;
   }

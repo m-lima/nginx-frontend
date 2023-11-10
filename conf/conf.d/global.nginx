@@ -3,11 +3,6 @@ server {
   listen 80 default_server;
   listen 443 default_server ssl;
 
-  ssl_certificate /var/cert/fullchain.pem;
-  ssl_certificate_key /var/cert/privkey.pem;
-
-  charset utf-8;
-
   return 444;
 }
 
