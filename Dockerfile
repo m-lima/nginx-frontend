@@ -17,8 +17,7 @@ COPY certbot/data/cert /var/cert
 COPY oauth /tmp/oauth
 COPY hostname.env /tmp/hostname.env
 
-RUN mkdir /var/log/nginx && \
-    mkdir /etc/nginx/lua && \
+RUN mkdir /etc/nginx/lua && \
     . /tmp/hostname.env && \
     for conf in `find /etc/nginx -name '*.nginx' -type f`; do \
       sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" "$conf" && \
