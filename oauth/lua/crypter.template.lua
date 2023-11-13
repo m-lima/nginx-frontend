@@ -60,6 +60,7 @@ end
 --
 -- Returns:
 --    - {
+--        expiry: number,
 --        email: string,
 --        given_name: string,
 --        family_name: string,
@@ -89,12 +90,13 @@ local function string_to_user(string, ttl)
     return nil
   end
 
-  if os.time() - fields[1] > ttl then
+  if ngx.time() - expiry > ttl then
     ngx.log(ngx.STDERR, 'Expired token')
     return nil
   end
 
   return {
+    expiry = expiry,
     email = fields[2],
     given_name = fields[3],
     family_name = fields[4],
@@ -123,7 +125,7 @@ local M = {}
 M.encrypt_user = function(user)
   local payload_slice = make_slice(string.format(
     '%d\0%s\0%s\0%s\0%s',
-    os.time(),
+    ngx.time(),
     user.email,
     user.given_name,
     user.family_name,
@@ -147,6 +149,7 @@ end
 --
 -- Returns:
 --    - {
+--        expiry: number,
 --        email: string,
 --        given_name: string,
 --        family_name: string,

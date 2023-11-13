@@ -3,7 +3,7 @@ ngx.log(ngx.STDERR, 'Loading auther')
 local openidc = require('resty.openidc')
 local crypter = require('crypter')
 
-local token_ttl = 172800
+local token_ttl = 345600
 local token_cookie_suffix = ';Path=/;Max-Age=' .. token_ttl .. ';Secure;HttpOnly;SameSite=lax'
 
 local function call_oidc(pass)
@@ -71,25 +71,28 @@ local function set_user(user)
   if user.family_name then ngx.req.set_header('X-FAMILY-NAME', user.family_name) end
   if user.picture then ngx.req.set_header('X-PICTURE', user.picture) end
 
-  local cookie = {}
+  -- Only update the token if enough time has passed
+  if user.expiry and ngx.time() - user.expiry < token_ttl / 2 then
+    local cookie = {}
 
-  -- Remove session cookie, if present
-  if ngx.var.cookie_session then
-    cookie = { 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
+    -- Remove session cookie, if present
+    if ngx.var.cookie_session then
+      cookie = { 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
+    end
+
+    -- Add email hint, if missing
+    if not ngx.var.cookie_email then
+      table.insert(cookie, 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax')
+    end
+
+    -- Add user token, if possible
+    local user_token = crypter.encrypt_user(user)
+    if user_token then
+      table.insert(cookie, 'user=' .. user_token .. token_cookie_suffix)
+    end
+
+    ngx.header.set_cookie = cookie
   end
-
-  -- Add email hint, if missing
-  if not ngx.var.cookie_email then
-    table.insert(cookie, 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax')
-  end
-
-  -- Add user token, if possible
-  local user_token = crypter.encrypt_user(user)
-  if user_token then
-    table.insert(cookie, 'user=' .. user_token .. token_cookie_suffix)
-  end
-
-  ngx.header.set_cookie = cookie
 end
 
 local function auth(pass)
