@@ -60,7 +60,7 @@ end
 --
 -- Returns:
 --    - {
---        expiry: number,
+--        age: number,
 --        email: string,
 --        given_name: string,
 --        family_name: string,
@@ -84,19 +84,19 @@ local function string_to_user(string, ttl)
     return nil
   end
 
-  local expiry = tonumber(fields[1])
-  if not expiry then
-    ngx.log(ngx.STDERR, 'Maformed expiry')
+  local age = tonumber(fields[1])
+  if not age then
+    ngx.log(ngx.STDERR, 'Maformed age')
     return nil
   end
 
-  if ngx.time() - expiry > ttl then
+  if ngx.time() - age > ttl then
     ngx.log(ngx.STDERR, 'Expired token')
     return nil
   end
 
   return {
-    expiry = expiry,
+    age = age,
     email = fields[2],
     given_name = fields[3],
     family_name = fields[4],
@@ -149,7 +149,7 @@ end
 --
 -- Returns:
 --    - {
---        expiry: number,
+--        age: number,
 --        email: string,
 --        given_name: string,
 --        family_name: string,

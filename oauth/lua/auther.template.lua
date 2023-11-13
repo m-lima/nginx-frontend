@@ -72,7 +72,7 @@ local function set_user(user)
   if user.picture then ngx.req.set_header('X-PICTURE', user.picture) end
 
   -- Only update the token if enough time has passed
-  if user.expiry and ngx.time() - user.expiry < token_ttl / 2 then
+  if user.age and ngx.time() - user.age > token_ttl / 2 then
     local cookie = {}
 
     -- Remove session cookie, if present
