@@ -13,7 +13,7 @@ if ! $(command -v "${pod}" > /dev/null); then
   exit 1
 fi
 
-git clone https://github.com/m-lima/crypter /tmp/crypter && \
+git clone --depth 1 --branch v0.1.3 https://github.com/m-lima/crypter /tmp/crypter && \
 ${pod} run -it --rm -v /tmp/crypter:/src -w /src -e RUSTFLAGS="-C target-feature=-crt-static" docker.io/rust:1.73.0-alpine3.18 ash -c 'apk add musl-dev && cargo build --release --features ffi' && \
 mv /tmp/crypter/target/release/libcrypter.so "${base}/lib/." && \
 rm -rf /tmp/crypter
