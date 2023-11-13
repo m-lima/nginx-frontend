@@ -7,7 +7,7 @@ if [ "${1}" ]; then
   pod="${1}"
 fi
 
-if [ ! `command -v "${pod}" > /dev/null` ]; then
+if ! $(command -v "${pod}" > /dev/null); then
   echo "[31mExecutable [m${pod}[31m not found[m" >&2
   echo "Run ${0} <executable> to override" >&2
   exit 1
