@@ -46,7 +46,7 @@ local function call_oidc(pass)
   return res.user
 end
 
-local function get_user()
+local function get_user(pass)
   -- Try token from headers first
   local encoded = ngx.var.http_x_user_token
   if type(encoded) == 'table' then
@@ -96,7 +96,7 @@ local function set_user(user)
 end
 
 local function auth(pass)
-  local user = get_user()
+  local user = get_user(pass)
 
   if not (user and user.email) then
     ngx.status = 401
