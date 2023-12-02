@@ -71,28 +71,28 @@ local function set_user(user)
   if user.family_name then ngx.req.set_header('X-FAMILY-NAME', user.family_name) end
   if user.picture then ngx.req.set_header('X-PICTURE', user.picture) end
 
-  -- Only update the token if enough time has passed
-  if user.age and ngx.time() - user.age > token_ttl / 2 then
-    local cookie = {}
+  local cookie = {}
 
-    -- Remove session cookie, if present
-    if ngx.var.cookie_session then
-      cookie = { 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
-    end
+  -- Remove session cookie, if present
+  if ngx.var.cookie_session then
+    cookie = { 'session=;Path=/;Max-Age=0;Secure;HttpOnly;SameSite=lax' }
+  end
 
-    -- Add email hint, if missing
-    if not ngx.var.cookie_email then
-      table.insert(cookie, 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax')
-    end
+  -- Add email hint, if missing
+  if not ngx.var.cookie_email then
+    table.insert(cookie, 'email=' .. user.email .. ';Path=/;Max-Age=2592000;Secure;HttpOnly;SameSite=lax')
+  end
 
+  -- Only update the token if it is missing or enough time has passed
+  if not user.age or ngx.time() - user.age > token_ttl / 2 then
     -- Add user token, if possible
     local user_token = crypter.encrypt_user(user)
     if user_token then
       table.insert(cookie, 'user=' .. user_token .. token_cookie_suffix)
     end
-
-    ngx.header.set_cookie = cookie
   end
+
+  ngx.header.set_cookie = cookie
 end
 
 local function auth(pass)
