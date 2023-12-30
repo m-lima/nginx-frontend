@@ -16,6 +16,7 @@ function usage {
   echo
   echo "OPTIONS"
   echo "  -v <name>:[<path>] Attach the given volume to <name>:/var/www/<name> or <path>:/var/www/<name>"
+  echo "  -n <name>          Attach to the given network"
   echo "  -d                 Use docker instead of podman"
   echo "  -c                 Stop and start the service"
   echo "  -h                 Print this help message"
@@ -92,6 +93,7 @@ function build {
   )
   local volume_name
   local volume_path
+  local networks=""
 
   while [ "${1}" ]; do
     case "${1}" in
@@ -120,6 +122,14 @@ function build {
           fi
         else
           error "Expected a volume name for -v"
+        fi
+        ;;
+      "-n")
+        shift
+        if [ "${1}" ]; then
+          networks="${1}${networks+ $networks}"
+        else
+          error "Expected a network name for -n"
         fi
         ;;
       "-d") pod="docker" ;;
@@ -170,6 +180,11 @@ function build {
     --network nginx \
     --name "${service_name}" \
     "${service_name}"
+
+  for net in ${networks[@]}; do
+    echo "[34mConnecting to ${net}[m"
+    ${pod} network connect "${net}" "${service_name}"
+  done
 
   if [ ${cycle} ]; then
     echo "[34mStarting the service[m"
