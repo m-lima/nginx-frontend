@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-service_name="nginx-frontend"
+service_name="nginx"
 
 function usage {
   local base=$(basename "${0}")
@@ -167,9 +167,9 @@ function build {
   fi
 
   echo "[34mChecking for existing network[m"
-  output=$(${pod} network ls --format '{{.Name}}' | grep nginx)
+  output=$(${pod} network ls --format '{{.Name}}' | grep "${service_name}")
   if [ ! "${output}" ]; then
-    ${pod} network create nginx
+    ${pod} network create "${service_name}"
   fi
 
   echo "[34mCreating the container[m"
@@ -177,7 +177,7 @@ function build {
     --publish 80:80 \
     --publish 443:443 \
     ${volumes} \
-    --network nginx \
+    --network "${service_name}" \
     --name "${service_name}" \
     "${service_name}"
 
