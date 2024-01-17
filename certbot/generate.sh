@@ -88,9 +88,9 @@ fi
 echo " with a ${timeout}s timeout"
 
 if [ "${wildcard}" ]; then
-  domain="-d ${wildcard} -d ${domain}"
+  domain_param="-d ${wildcard} -d ${domain}"
 else
-  domain="-d ${domain}"
+  domain_param="-d ${domain}"
 fi
 
 ${pod} run --rm \
@@ -109,7 +109,7 @@ ${pod} run --rm \
     --server https://acme-v02.api.letsencrypt.org/directory \
     --agree-tos \
     --register-unsafely-without-email \
-    ${domain} \
+    ${domain_param} \
 && cp "${base}/data/etc/live/${domain}/"* "${base}/data/cert/."
 
 # ${pod} run -it --rm --name certbot \
