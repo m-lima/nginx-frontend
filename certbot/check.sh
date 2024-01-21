@@ -2,11 +2,11 @@
 
 base=`dirname "${0}"`
 
-if [ -d "${base}/../cert" ]
+if [ -d "${base}/../certbot/data/cert" ]
 then
-  if [ -f "${base}/../cert/fullchain.pem" ]
+  if [ -f "${base}/../certbot/data/cert/fullchain.pem" ]
   then
-    cert_date=`date -r "${base}/../cert/fullchain.pem" +%s`
+    cert_date=`date -r "${base}/../certbot/data/cert/fullchain.pem" +%s`
     now=`date +%s`
     cert_age=$(( now - cert_date ))
     unset cert_date now
@@ -24,8 +24,8 @@ then
       echo '[33mTLS certificates will expire in less than 20 days[m'
     fi
   else
-    echo "[31mCould not find[37m ${base}/../cert/fullchain.pem[m"
+    echo "[31mCould not find[37m ${base}/../certbot/data/cert/fullchain.pem[m"
   fi
 else
-  echo "[31mCould not find[37m ${base}/../cert[m"
+  echo "[31mCould not find[37m ${base}/../certbot/data/cert[m"
 fi
