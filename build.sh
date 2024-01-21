@@ -56,7 +56,9 @@ function unit {
   fi
 
   if [[ "${pod}" == "podman" ]]; then
-    ${pod} generate systemd --name "${service_name}" | sed 's/^Description=.*$/Description=Nginx gateway into container network/g'
+    ${pod} generate systemd --name "${service_name}" \
+      | sed 's/^Description=.*$/Description=Nginx gateway into container network/g' \
+      | sed 's/^Restart=.*$/Restart=always/g'
   else
     bin=$(which "${pod}")
 
