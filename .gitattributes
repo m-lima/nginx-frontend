@@ -1,2 +1,5 @@
 # Servers
 conf/services/available/** filter=git-crypt diff=git-crypt
+
+# Build
+build_prod.sh filter=git-crypt diff=git-crypt
