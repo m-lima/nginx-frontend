@@ -114,7 +114,7 @@ function build {
               volume_path="${volume_name}"
             fi
 
-            if ! grep "${volume_name}" <<<"${autovolumes}" &> /dev/null ; then
+            if ! grep -w "${volume_name}" <<<"${autovolumes}" &> /dev/null ; then
               echo "[33mAdding volume that is not detected as required:[m ${volume_name}"
             else
               autovolumes=$(sed "/${volume_name}/d" <<<"${autovolumes}")
@@ -158,19 +158,19 @@ function build {
   fi
 
   echo "[34mChecking for running instances[m"
-  output=$(${pod} ps --format '{{.ID}} {{.Names}}' | grep "${service_name}")
+  output=$(${pod} ps --format '{{.ID}} {{.Names}}' | grep -w "${service_name}")
   if [ "${output}" ]; then
     ${pod} stop $(cut -d' ' -f1 <<<"${output}")
   fi
 
   echo "[34mChecking for existing containers[m"
-  output=$(${pod} ps -a --format '{{.ID}} {{.Names}}' | grep "${service_name}")
+  output=$(${pod} ps -a --format '{{.ID}} {{.Names}}' | grep -w "${service_name}")
   if [ "${output}" ]; then
     ${pod} rm $(cut -d' ' -f1 <<<"${output}")
   fi
 
   echo "[34mChecking for existing network[m"
-  output=$(${pod} network ls --format '{{.Name}}' | grep "${service_name}")
+  output=$(${pod} network ls --format '{{.Name}}' | grep -w "${service_name}")
   if [ ! "${output}" ]; then
     ${pod} network create "${service_name}"
   fi
