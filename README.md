@@ -1,6 +1,6 @@
 # External changes
 
-Add a CNAME record to the DNS poiting to '@'
+Add a CNAME record to the DNS pointing to '@'
 
 # Statically served
 ## Map the volume

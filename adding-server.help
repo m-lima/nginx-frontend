@@ -12,7 +12,7 @@ CONTENTS                                                              *contents*
 ==============================================================================
 EXTERNAL CHANGES                                              *external-changes*
 
-Add a CNAME record to the DNS poiting to '@'
+Add a CNAME record to the DNS pointing to '@'
 
 ==============================================================================
 STATICALLY SERVED                                            *statically-served*
