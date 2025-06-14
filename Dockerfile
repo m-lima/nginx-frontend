@@ -9,7 +9,7 @@
 # certbot/cert:
 #  - TLS pem files
 
-FROM docker.io/openresty/openresty:1.21.4.2-1-alpine-fat
+FROM docker.io/openresty/openresty:1.25.3.2-5-alpine-fat
 
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
