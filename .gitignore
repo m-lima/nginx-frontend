@@ -9,3 +9,6 @@ certbot/token
 
 # Backup ignored files
 backup
+
+# Nix
+.direnv
