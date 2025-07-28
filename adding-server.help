@@ -50,7 +50,8 @@ ADD NGINX ENTRY                                         *static-add-nginx-entry*
       }
 
       server {
-        listen 443 ssl http2;
+        listen 443 ssl;
+        http2 on;
         server_name <server>.server.com;
 
         location / {

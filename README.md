@@ -40,7 +40,8 @@ Add a CNAME record to the DNS pointing to '@'
       }
 
       server {
-        listen 443 ssl http2;
+        listen 443 ssl;
+        http2 on;
         server_name <server>.server.com;
 
         location / {
