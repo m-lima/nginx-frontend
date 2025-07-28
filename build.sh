@@ -179,6 +179,7 @@ function build {
   ${pod} create \
     --publish 80:80 \
     --publish 443:443 \
+    -v certbot-etc:/etc/letsencrypt \
     ${volumes} \
     --network "${service_name}" \
     --name "${service_name}" \

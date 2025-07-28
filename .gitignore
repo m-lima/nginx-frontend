@@ -5,6 +5,7 @@
 oauth/oauth.env
 certbot/data
 hostname.env
+certbot/token
 
 # Backup ignored files
 backup
