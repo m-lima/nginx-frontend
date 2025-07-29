@@ -23,7 +23,8 @@ COPY certbot/token/cloudflare.ini /opt/nginx/certbot/cloudflare.ini
 COPY oauth /tmp/oauth
 COPY hostname.env /tmp/hostname.env
 
-RUN mkdir /etc/nginx/lua && \
+RUN apk add --no-cache certbot certbot-dns-cloudflare busybox-suid && \
+    mkdir /etc/nginx/lua && \
     . /tmp/hostname.env && \
     for conf in $(find /etc/nginx -name '*.nginx' -type f && echo /etc/nginx/nginx.conf); do \
       sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" "$conf" && \
@@ -33,7 +34,6 @@ RUN mkdir /etc/nginx/lua && \
       < /tmp/entrypoint.sh \
       > /opt/nginx/entrypoint.sh && \
     rm /tmp/entrypoint.sh && \
-    chmod +x /opt/nginx/entrypoint.sh && \
     rm /tmp/hostname.env && \
     . /tmp/oauth/oauth.env && \
     [ "${CLIENT_ID}" ] && \
@@ -49,7 +49,8 @@ RUN mkdir /etc/nginx/lua && \
     rm -rf /tmp/oauth && \
     luarocks install lua-resty-openidc 1.7.6-3 && \
     chmod 600 /opt/nginx/certbot/cloudflare.ini && \
-    apk add --no-cache certbot certbot-dns-cloudflare busybox-suid && \
+    chmod +x /opt/nginx/entrypoint.sh && \
+    chmod +x /opt/nginx/certbot/renew.sh && \
     echo '0 6 * * * /opt/nginx/certbot/renew.sh >> /var/log/certbot.log 2>&1' > /etc/crontabs/root
 
 EXPOSE 80
