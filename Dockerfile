@@ -8,6 +8,7 @@
 #    - export HOST_NAME_REGEX=<domain>\\\\<tld>
 #   certbot/token: DNS API token
 #   certbot/renew.sh: Script to renew the DNS
+#   certbot/reload.sh: Script to reload nginx upon renewal
 #   entrypoint.sh: Entrypoint script
 #
 # Required volumes:
@@ -19,6 +20,7 @@ COPY entrypoint.sh /tmp/entrypoint.sh
 COPY index.html /usr/local/openresty/nginx/html/index.html
 COPY conf /etc/nginx
 COPY certbot/renew.sh /opt/nginx/certbot/renew.sh
+COPY certbot/reload.sh /opt/nginx/certbot/reload.sh
 COPY certbot/token/cloudflare.ini /opt/nginx/certbot/cloudflare.ini
 COPY oauth /tmp/oauth
 COPY hostname.env /tmp/hostname.env
@@ -51,6 +53,7 @@ RUN apk add --no-cache certbot certbot-dns-cloudflare busybox-suid && \
     chmod 600 /opt/nginx/certbot/cloudflare.ini && \
     chmod +x /opt/nginx/entrypoint.sh && \
     chmod +x /opt/nginx/certbot/renew.sh && \
+    chmod +x /opt/nginx/certbot/reload.sh && \
     echo '0 6 * * * /opt/nginx/certbot/renew.sh >> /var/log/certbot.log 2>&1' > /etc/crontabs/root
 
 EXPOSE 80

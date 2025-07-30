@@ -12,5 +12,7 @@ else
   certbot renew \
     --dns-cloudflare \
     --dns-cloudflare-credentials /opt/nginx/certbot/cloudflare.ini \
-    --deploy-hook '/usr/local/openresty/bin/openresty -s reload'
+    --deploy-hook '/opt/nginx/certbot/reload.sh' && \
+    log 'Done' || \
+    log 'Failed'
 fi
