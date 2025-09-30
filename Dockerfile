@@ -28,9 +28,9 @@ COPY hostname.env /tmp/hostname.env
 RUN apk add --no-cache certbot certbot-dns-cloudflare busybox-suid && \
     mkdir /etc/nginx/lua && \
     . /tmp/hostname.env && \
-    for conf in $(find /etc/nginx -name '*.nginx' -type f && echo /etc/nginx/nginx.conf); do \
-      sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~" "$conf" && \
-      sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~" "$conf"; \
+    for conf in $(find /etc/nginx -name '*.nginx' -type f; echo /etc/nginx/nginx.conf); do \
+      sed -i "s~"'$HOST_NAME_REGEX'"~${HOST_NAME_REGEX}~g" "$conf" && \
+      sed -i "s~"'$HOST_NAME'"~${HOST_NAME}~g" "$conf"; \
     done; \
     envsubst '\$HOST_NAME' \
       < /tmp/entrypoint.sh \
@@ -59,6 +59,6 @@ RUN apk add --no-cache certbot certbot-dns-cloudflare busybox-suid && \
 EXPOSE 80
 EXPOSE 443
 
-STOPSIGNAL SIGTERM
+STOPSIGNAL SIGQUIT
 
 CMD [ "/opt/nginx/entrypoint.sh" ]
