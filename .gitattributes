@@ -3,3 +3,6 @@ conf/services/available/** filter=git-crypt diff=git-crypt
 
 # Deploy
 deploy.sh filter=git-crypt diff=git-crypt
+
+# Secrets
+hostname.env filter=git-crypt diff=git-crypt
